@@ -12,6 +12,7 @@ import plotly.express as px
 import csv
 import pandas as pd
 from utils import create_heatmap, ViewTransformer, resize_frame_to_360p
+from enhance import VideoEnhancer
 
 st.set_page_config(page_title="Traffic Analysis", layout="wide")
 
@@ -87,6 +88,37 @@ if os.path.exists(st.session_state["video_name"]):
     #endregion
 
     if run:
+        #region Enhancement setup
+        message.info("Setting up analysis components...")
+        
+        # Initialize the enhancer if enhancement is enabled
+        if st.session_state.get("enhancement_mode", "Off") != "Off":
+            # Get enhancement parameters from session state
+            enhancement_mode = st.session_state["enhancement_mode"]
+            enhancement_threshold = st.session_state.get("enhancement_threshold", DEFAULT_ENHANCEMENT_THRESHOLD)
+            enhancement_model_path = st.session_state.get("enhancement_model_path", 
+                                                        ENHANCEMENT_MODELS["Default"]["weight_path"])
+            
+            # Determine device based on settings
+            enhancer_device = "cuda" if st.session_state["device"] == "GPU" and torch.cuda.is_available() else "cpu"
+            
+            # Initialize the enhancer
+            message.info(f"Initializing video enhancer in {enhancement_mode} mode using {enhancer_device}...")
+            try:
+                enhancer = VideoEnhancer(
+                    model_path=enhancement_model_path,
+                    scale_factor=1,
+                    device=enhancer_device
+                )
+                message.success("Video enhancer initialized successfully.")
+            except Exception as e:
+                message.error(f"Failed to initialize enhancer: {str(e)}")
+                st.session_state["enhancement_mode"] = "Off"
+                enhancer = None
+        else:
+            enhancer = None
+        #endregion
+
         #region get the settings and set up the backend
 
         # get the detection settings
@@ -188,6 +220,21 @@ if os.path.exists(st.session_state["video_name"]):
             if not ret:
                 capture.release()
                 break
+                
+            # Apply enhancement if enabled
+            if st.session_state.get("enhancement_mode", "Off") != "Off" and enhancer is not None:
+                threshold = st.session_state.get("enhancement_threshold", DEFAULT_ENHANCEMENT_THRESHOLD)
+                try:
+                    frame = enhancer.process_frame(
+                        frame, 
+                        mode=st.session_state["enhancement_mode"],
+                        threshold=threshold
+                    )
+                except Exception as e:
+                    # If enhancement fails, log it but continue with the original frame
+                    if image_index % 30 == 0:  # Only log every 30 frames to avoid spamming
+                        print(f"Enhancement failed: {str(e)}")
+                
             image_index+=1 # increment the image index
             image = resize_frame_to_360p(frame)
             

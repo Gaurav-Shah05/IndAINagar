@@ -41,6 +41,48 @@ if os.path.exists(st.session_state["video_name"]):
             st.session_state["device"] = st.selectbox("Select the Device", ["CPU", "GPU"], help="Select the device to run the detection model on.")
     #endregion
 
+    #region Enhancement Settings
+    with st.expander("Enhancement Settings", expanded=True):
+        st.info("Configure video enhancement for low-light conditions.")
+        
+        col_enh = st.columns(2)
+        with col_enh[0]:
+            # Enhancement mode selection
+            enhancement_mode = st.selectbox(
+                "Enhancement Mode",
+                ENHANCEMENT_MODES,
+                index=ENHANCEMENT_MODES.index(DEFAULT_ENHANCEMENT_MODE),
+                help="Choose whether to enhance video, and how to decide when to enhance."
+            )
+            
+            # Store the selection in session state
+            st.session_state["enhancement_mode"] = enhancement_mode
+        
+        with col_enh[1]:
+            # If Auto mode is selected, show threshold slider
+            if enhancement_mode == "Auto":
+                enhancement_threshold = st.slider(
+                    "Brightness Threshold",
+                    0, 100, DEFAULT_ENHANCEMENT_THRESHOLD, 1,
+                    help="Frames with average brightness below this threshold will be enhanced."
+                )
+                st.session_state["enhancement_threshold"] = enhancement_threshold
+            else:
+                # Set a default threshold even if not shown
+                st.session_state["enhancement_threshold"] = DEFAULT_ENHANCEMENT_THRESHOLD
+        
+        # Model selection for future extension
+        if enhancement_mode != "Off":
+            enhancement_model = st.selectbox(
+                "Enhancement Model",
+                list(ENHANCEMENT_MODELS.keys()),
+                index=0,
+                help="Select the enhancement model to use."
+            )
+            st.session_state["enhancement_model"] = enhancement_model
+            st.session_state["enhancement_model_path"] = ENHANCEMENT_MODELS[enhancement_model]["weight_path"]
+    #endregion
+
     # region Detector Settings
     with st.expander("Detector Settings", expanded=True):
         st.info("Select the annotators to display the detection results on the dashboard and the classes to detect in the video.")

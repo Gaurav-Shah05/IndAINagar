@@ -147,3 +147,15 @@ SUPERVISION_ANNOTATORS = {
     "Heatmap": sv.HeatMapAnnotator(radius=5, opacity=0.2, position=sv.Position.CENTER),
     "Percentage Bar" : sv.PercentageBarAnnotator(),
 }
+
+#------------ADDITION FOR ENHANCEMENT------------------
+ENHANCEMENT_MODES = ["Off", "On", "Auto"]
+DEFAULT_ENHANCEMENT_THRESHOLD = 30
+DEFAULT_ENHANCEMENT_MODE = "Off"
+
+# Enhancement models
+ENHANCEMENT_MODELS = {
+    "Default": {"name": "Default Enhancement", "weight_path": "dependencies/enhancement/zerodce/weight/Epoch99.pth"},
+    # Add more models here in the future
+    # "Model2": {"name": "Night Vision", "weight_path": "dependencies/enhancement/zerodce/weight/other_model.pth"},
+}
